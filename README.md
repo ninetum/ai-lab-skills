@@ -7,7 +7,7 @@ that keeps hitting the same walls: an agent that cannot watch video, and image
 generation that bills per picture.
 
 ```bash
-npx skills add YOUR_GITHUB_USER/ai-lab-skills
+npx skills add ninetum/ai-lab-skills
 ```
 
 Pick the skills you want; your agent picks them up next time it runs.
@@ -135,7 +135,7 @@ ai-lab-skills/
 If you would rather not use `npx skills`:
 
 ```bash
-git clone https://github.com/YOUR_GITHUB_USER/ai-lab-skills
+git clone https://github.com/ninetum/ai-lab-skills
 cp -R ai-lab-skills/skills/video-understand ~/.claude/skills/
 cp -R ai-lab-skills/skills/image-gen-router ~/.claude/skills/
 ```
