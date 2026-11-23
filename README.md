@@ -1,11 +1,13 @@
-# ii23-skills
+# ai-lab-skills
+
+> Forked from [andrewii23/ii23-skills](https://github.com/andrewii23/ii23-skills) (MIT).
 
 Agent skills for Claude Code (and any skills-compatible agent), built for work
 that keeps hitting the same walls: an agent that cannot watch video, and image
 generation that bills per picture.
 
 ```bash
-npx skills add andrewii23/ii23-skills
+npx skills add YOUR_GITHUB_USER/ai-lab-skills
 ```
 
 Pick the skills you want; your agent picks them up next time it runs.
@@ -113,7 +115,7 @@ Python 3.9+, standard library only.
 ## Repo layout
 
 ```
-ii23-skills/
+ai-lab-skills/
 ├── skills/                  # the skills themselves
 │   ├── video-understand/
 │   │   ├── SKILL.md         # the agent contract
@@ -133,9 +135,9 @@ ii23-skills/
 If you would rather not use `npx skills`:
 
 ```bash
-git clone https://github.com/andrewii23/ii23-skills
-cp -R ii23-skills/skills/video-understand ~/.claude/skills/
-cp -R ii23-skills/skills/image-gen-router ~/.claude/skills/
+git clone https://github.com/YOUR_GITHUB_USER/ai-lab-skills
+cp -R ai-lab-skills/skills/video-understand ~/.claude/skills/
+cp -R ai-lab-skills/skills/image-gen-router ~/.claude/skills/
 ```
 
 Restart your agent (or start a new session) so it picks up the new skills.
