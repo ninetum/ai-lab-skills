@@ -64,8 +64,9 @@ nothing installed.
 ## Your own music, kept private
 
 `music_lib.py` registers your own background tracks by **theme** (main,
-commerce, travel, ...) in a library outside the repo. The agent picks a theme
-to match the clip. The bed starts where the track's energy kicks in, sits about
+travel, ...) in a library outside the repo. The agent picks a theme to match
+the clip. Product and sales clips get no music at all: voice and sound effects
+carry them. The bed starts where the track's energy kicks in, sits about
 14 dB under the voice, ducks while anyone talks, and fades out at the end. The
 tracks never enter the repo, which is public.
 

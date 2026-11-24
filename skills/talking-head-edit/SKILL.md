@@ -182,12 +182,16 @@ is a lone fragment. Then send the video to the user and say what was cut
 `plan.py --music THEME` lays a background bed from the private library at
 `~/.cache/talking-head-edit/music`. Pick the theme from what the clip is about,
 using each track's `use` line (`python3 "$SKILL_DIR/scripts/music_lib.py" list`).
-Typical themes are `main` for talk, tips and vlogs (the default), `commerce` for
-product, review and sales clips, and `travel` for trips, rides and the
-outdoors. The bed starts at the track's energy point (most tracks open with a
-10-20 s intro that a short never gets past), sits about 14 dB under the voice,
-ducks 3:1 while anyone talks, and fades out over the last 1.5 s. Use `--music
-none` when the user will add a trending sound in the app instead.
+Typical themes are `main` for talk, tips and vlogs (the default), and `travel`
+for trips, rides and the outdoors. The bed starts at the track's energy point
+(most tracks open with a 10-20 s intro that a short never gets past), sits about
+14 dB under the voice, ducks 3:1 while anyone talks, and fades out over the last
+1.5 s.
+
+**Product and sales clips get no music: always `--music none`.** This includes
+reviews, pricing, promotions, and "ปักตะกร้า" or "กดตะกร้า" calls. Voice and SFX
+carry them; `cash`, `camera` and `click` do the work there. Also use `--music
+none` when the user will add a trending sound in the app.
 
 **These tracks belong to the user and nobody else may use them.** Never copy
 one into this repo (it is public), a commit, an artifact, a shared link, or any

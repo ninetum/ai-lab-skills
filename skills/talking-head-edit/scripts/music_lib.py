@@ -5,7 +5,7 @@ The library lives OUTSIDE the repo (default ~/.cache/talking-head-edit/music):
 the tracks are the user's own, and this repo is public. Never copy them into
 the skill folder, a commit, or any upload.
 
-Each track gets a theme ("main", "commerce", "travel", ...), a one-line `use`
+Each track gets a theme ("main", "travel", ...), a one-line `use`
 that tells the agent when to pick it, and a `start` offset. Most tracks open
 with a 10-20 s intro. A 30 s short that starts at 0:00 never reaches the part
 that carries energy, so `start` is the first moment the track reaches its

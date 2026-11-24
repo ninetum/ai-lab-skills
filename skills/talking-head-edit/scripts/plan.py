@@ -218,7 +218,7 @@ def main() -> int:
     ap.add_argument("--no-punch", action="store_true")
     ap.add_argument("--no-sfx", action="store_true")
     ap.add_argument("--music", default="main",
-                    help="library theme (main/commerce/travel/...), an audio file, or none")
+                    help="library theme (main/travel/...); none for product/sales clips, an audio file, or none")
     args = ap.parse_args()
 
     video = str(Path(args.video).resolve())
