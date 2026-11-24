@@ -29,6 +29,8 @@ calls in between.
 - `scripts/render.py`: renders the plan exactly. It makes no choices of its own.
 - `scripts/sfx_kit.py`: builds a sound-effect kit from the user's own SFX pack
   (a folder or .zip). Run it once; `render.py` picks the kit up automatically.
+- `scripts/music_lib.py`: registers the user's own background tracks by theme
+  in a private library outside the repo.
 
 **Apply the house style without asking.** The user set it up so they never have
 to repeat it. Jump cuts, punch-ins, keyword zooms, karaoke subtitles (Mitr Bold;
@@ -175,18 +177,34 @@ is a lone fragment. Then send the video to the user and say what was cut
 - **`--min-silence` is a style dial.** Raise it to 0.7 for calm explainers.
   Below 0.3 it starts eating breaths mid-sentence.
 
-## Music
+## Music: the user's own tracks only
 
-Never mix a trending song into the render. Commercial music gets muted or the
-clip taken down, and business accounts may use only TikTok's Commercial Music
-Library. Deliver voice plus SFX, and tell the user to add the trending sound in
-the app when posting, at about 10-15% volume. The algorithm also favours clips
-that use a trending sound attached in the app.
+`plan.py --music THEME` lays a background bed from the private library at
+`~/.cache/talking-head-edit/music`. Pick the theme from what the clip is about,
+using each track's `use` line (`python3 "$SKILL_DIR/scripts/music_lib.py" list`).
+Typical themes are `main` for talk, tips and vlogs (the default), `commerce` for
+product, review and sales clips, and `travel` for trips, rides and the
+outdoors. The bed starts at the track's energy point (most tracks open with a
+10-20 s intro that a short never gets past), sits about 14 dB under the voice,
+ducks 3:1 while anyone talks, and fades out over the last 1.5 s. Use `--music
+none` when the user will add a trending sound in the app instead.
+
+**These tracks belong to the user and nobody else may use them.** Never copy
+one into this repo (it is public), a commit, an artifact, a shared link, or any
+upload, and never render someone else's clip with them. If the library is
+empty, render without music and say so. Do not substitute another track.
+
+Never mix a trending or commercial song into the render either. Those get muted
+or taken down, and business accounts may use only TikTok's Commercial Music
+Library. For a trend, deliver the clip with `--music none` and tell the user to
+add the sound in the app at about 10-15% volume.
 
 ## Measured
 
 On a 9.0 s, 480x360 (portrait, rotated) H.264 phone clip of Thai speech, on a
 4-core cloud container with no GPU: `transcribe.py` with large-v3 took 27.2 s
 (model already cached), `plan.py` 0.2 s, and `render.py` 12.2 s for a 7.3 s
-1080x1440 output. Building the kit from a 395 MB, 636-file pack took 11 s, or
+1080x1440 output. With music, voice levelled to -16 LUFS and a ducked bed 6 dB down measured
+about 14 dB under the voice (-29.8 LUFS bed against -16 LUFS voice), and the
+master came out at -14.7 LUFS. Building the kit from a 395 MB, 636-file pack took 11 s, or
 27.3 s including the download from Google Drive.

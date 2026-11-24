@@ -26,6 +26,8 @@ Usage:
                   [--aspect source|9:16|4:5|1:1] [--focus 0.5,0.4]
                   [--min-silence 0.45] [--silence-db -32] [--pad 0.12]
                   [--emphasis คำ,word] [--no-cuts] [--no-punch] [--no-sfx]
+                  [--music THEME|FILE|none]  (default: theme "main" if the
+                  private library ~/.cache/talking-head-edit/music has it)
 
 Prints `PLAN: <abs-path>` on the last line. Exit 1 on bad input.
 Requires: ffmpeg on PATH. Python stdlib only.
@@ -164,6 +166,27 @@ def break_lines(ws: list[dict]) -> list[list[dict]]:
     return out[::-1]
 
 
+MUSIC_LIB = Path.home() / ".cache" / "talking-head-edit" / "music"
+
+
+def pick_music(choice: str) -> dict | None:
+    """Background bed: a library theme or a file. None when there is nothing."""
+    if choice == "none":
+        return None
+    f, start = Path(choice).expanduser(), 0.0
+    if not f.is_file():
+        lib = MUSIC_LIB / "library.json"
+        tracks = json.loads(lib.read_text(encoding="utf-8")) if lib.exists() else []
+        hit = next((t for t in tracks if t["theme"] == choice), None)
+        if not hit:
+            if choice != "main":
+                print(f"music theme '{choice}' not in library; no music", file=sys.stderr)
+            return None
+        f, start = MUSIC_LIB / hit["file"], hit["start"]
+    return {"file": str(f.resolve()), "start": start, "gain_db": -6,
+            "duck": True, "fade_in": 0.4, "fade_out": 1.5}
+
+
 def find_hits(words, keywords) -> dict[int, str]:
     """Word index -> keyword, matching across word boundaries."""
     text, owner = "", []
@@ -194,6 +217,8 @@ def main() -> int:
     ap.add_argument("--no-cuts", action="store_true")
     ap.add_argument("--no-punch", action="store_true")
     ap.add_argument("--no-sfx", action="store_true")
+    ap.add_argument("--music", default="main",
+                    help="library theme (main/commerce/travel/...), an audio file, or none")
     args = ap.parse_args()
 
     video = str(Path(args.video).resolve())
@@ -307,6 +332,7 @@ def main() -> int:
                   "active": "#FFE500", "base": "#FFFFFF",
                   "y": 0.72 if args.aspect == "9:16" else 0.86, "size": 0.1},
         "lines": line_out, "moves": moves, "sfx": sfx,
+        "music": pick_music(args.music),
     }
     out = Path(args.out).resolve()
     out.write_text(json.dumps(plan, ensure_ascii=False, indent=1), encoding="utf-8")

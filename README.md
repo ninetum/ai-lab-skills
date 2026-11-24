@@ -89,7 +89,10 @@ with PyThaiNLP. It writes every cut, camera move and sound cue into an editable
 voice: saying "ซูมอิน" or "zoom in" on camera pushes in on that word. Sound
 effects come from your own SFX pack. `sfx_kit.py` sorts it into roles like
 whoosh, pop, ka-ching and shutter, and aligns each sound's peak to its beat.
-Without a pack, pop, whoosh and ding are synthesized in code.
+Without a pack, pop, whoosh and ding are synthesized in code. Your own background
+tracks go in a private library outside the repo (`music_lib.py`). They are
+picked by theme, start where the track's energy kicks in, and duck under the
+voice.
 
 | Step | Measured (9.0 s Thai phone clip, 4-core CPU, no GPU) |
 | --- | --- |
@@ -159,7 +162,7 @@ ai-lab-skills/
 │   │   └── scripts/         # frames.py, transcript.py
 │   ├── talking-head-edit/
 │   │   ├── SKILL.md
-│   │   └── scripts/         # transcribe.py, plan.py, render.py, sfx_kit.py
+│   │   └── scripts/         # transcribe.py, plan.py, render.py, sfx_kit.py, music_lib.py
 │   └── image-gen-router/
 │       ├── SKILL.md
 │       └── scripts/         # gen_gpt.py, gen_gemini.py

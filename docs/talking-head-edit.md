@@ -61,9 +61,17 @@ Without a pack, pop, whoosh and ding are synthesized in code (a pitch-dropping
 sine, swept band-passed noise, a decaying bell), so the skill still works with
 nothing installed.
 
-Trending music is deliberately left out of the render. Add the sound in the
-TikTok or Reels app when posting: it avoids copyright takedowns, and the
-platforms push clips that use their trending sounds.
+## Your own music, kept private
+
+`music_lib.py` registers your own background tracks by **theme** (main,
+commerce, travel, ...) in a library outside the repo. The agent picks a theme
+to match the clip. The bed starts where the track's energy kicks in, sits about
+14 dB under the voice, ducks while anyone talks, and fades out at the end. The
+tracks never enter the repo, which is public.
+
+Trending and commercial songs are deliberately left out of the render. Add the
+sound in the TikTok or Reels app when posting: it avoids copyright takedowns,
+and the platforms push clips that use their trending sounds.
 
 ## Common questions
 
@@ -74,7 +82,8 @@ keeps the source aspect.
 **Can it put the trending TikTok song on it?**
 No. Songs mixed into the file get muted or taken down, and business accounts
 are limited to TikTok's Commercial Music Library. Add the trending sound in
-the app when you post.
+the app when you post. Your own tracks, from the private music library, are
+mixed in.
 
 **Why are some Thai words highlighted in pieces?**
 PyThaiNLP splits some loanwords into smaller parts ("ซับ ไต เติล"). Line breaks

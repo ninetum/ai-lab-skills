@@ -12,7 +12,10 @@ choices of its own. Pipeline:
              pack), aligned so the sound's PEAK lands on the cue time; without
              a kit, pop / whoosh / ding are synthesized in code. Voice is
              levelled to -16 LUFS before the mix and the master to -14 LUFS,
-             the level TikTok / Reels / Shorts play at
+             the level TikTok / Reels / Shorts play at. plan.music, when set,
+             is a background bed from the user's private library: it starts at
+             the track's energy point, sits about 14 dB under the voice (ducked
+             3:1 while anyone talks), and fades out at the end
 
 Subtitles light up word by word: the spoken word turns yellow and pops from
 135% to 100% in 140 ms; emphasis words use the display font. Fonts are Google
@@ -330,7 +333,7 @@ def main() -> int:
         by_file.setdefault(f, []).append((c, peak))
     idx = {}
     for f in by_file:
-        idx[f] = len(inputs) // 2
+        idx[f] = inputs.count("-i")
         inputs += ["-i", f]
     print(f"sfx: {'kit ' + str(kit_path) if kit else 'synthesized (no kit)'}",
           file=sys.stderr)
@@ -344,8 +347,28 @@ def main() -> int:
              f"zoompan=z='{z}':x='{x}':y='{y}':d=1:s={W}x{H}:fps={FPS},"
              f"ass='{esc}':fontsdir='{fdir}',format=yuv420p[v]"]
     # voice to -16 LUFS first so kit SFX (also -16 LUFS) sit `gain` below it
-    graph.append("[0:a]loudnorm=I=-16:TP=-1.5:LRA=11[voice]")
+    mus = plan.get("music")
+    if mus and not Path(mus["file"]).is_file():
+        print(f"music file missing: {mus['file']}; rendering without music",
+              file=sys.stderr)
+        mus = None
+    duck = bool(mus and mus.get("duck", True))
+    graph.append("[0:a]loudnorm=I=-16:TP=-1.5:LRA=11"
+                 + (",asplit=2[voice][vkey]" if duck else "[voice]"))
     mix = ["[voice]"]
+    if mus:
+        mi = inputs.count("-i")
+        inputs += ["-stream_loop", "-1", "-ss", str(mus.get("start", 0)), "-i", mus["file"]]
+        d = plan["duration"]
+        fo = mus.get("fade_out", 1.5)
+        graph.append(
+            f"[{mi}:a]atrim=0:{d:.3f},asetpts=PTS-STARTPTS,aresample=48000,"
+            f"loudnorm=I=-16:TP=-2,volume={mus.get('gain_db', -6)}dB,"
+            f"afade=t=in:d={mus.get('fade_in', 0.4)},"
+            f"afade=t=out:st={max(d - fo, 0):.3f}:d={fo}"
+            + ("[mraw];[mraw][vkey]sidechaincompress=threshold=0.05:ratio=3:"
+               "attack=20:release=400[mus]" if duck else "[mus]"))
+        mix.append("[mus]")
     for fi, (f, mine) in enumerate(by_file.items()):
         k = f"s{fi}_"
         labels = "".join(f"[{k}{n}]" for n in range(len(mine)))

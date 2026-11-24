@@ -19,3 +19,13 @@ evals/
 
 # Antigravity CLI session junk
 .antigravitycli
+
+# Media never belongs in this public repo (users' music, SFX packs, clips)
+*.mp3
+*.wav
+*.m4a
+*.aac
+*.flac
+*.mov
+*.MOV
+*.mp4
