@@ -48,15 +48,33 @@ points over their shoulder and says "there's something behind me", the agent
 adds a move that drifts the camera to the background. The renderer then plays
 the plan back exactly and makes no choices of its own.
 
-The sound effects are synthesized in code (a pitch-dropping sine for pop,
-swept band-passed noise for whoosh, a decaying bell for ding). There is no
-sample pack to license and nothing to download.
+## Your SFX pack, by role
+
+Point `sfx_kit.py` at your own sound-effect pack, a folder or a .zip. It sorts
+the pack into **roles**: pop, whoosh, ding, cash, click, camera, punch, fail,
+victory, drama, riser, glitch and typing. Each pick is trimmed, levelled, and
+marked with where its peak sits, so a whoosh hits on the zoom rather than a
+beat late. The agent places the role that fits what is being said: a ka-ching
+on a price, a shutter when a product is shown, a riser into a reveal.
+
+Without a pack, pop, whoosh and ding are synthesized in code (a pitch-dropping
+sine, swept band-passed noise, a decaying bell), so the skill still works with
+nothing installed.
+
+Trending music is deliberately left out of the render. Add the sound in the
+TikTok or Reels app when posting: it avoids copyright takedowns, and the
+platforms push clips that use their trending sounds.
 
 ## Common questions
 
 **Can it make a 9:16 TikTok version from a 4:3 or landscape clip?**
 Yes. Pass `--aspect 9:16` and it crops around the face. Without that flag it
 keeps the source aspect.
+
+**Can it put the trending TikTok song on it?**
+No. Songs mixed into the file get muted or taken down, and business accounts
+are limited to TikTok's Commercial Music Library. Add the trending sound in
+the app when you post.
 
 **Why are some Thai words highlighted in pieces?**
 PyThaiNLP splits some loanwords into smaller parts ("ซับ ไต เติล"). Line breaks
@@ -69,6 +87,7 @@ each part.
 - The word being spoken is yellow and pops; the words before and after it are white
 - The frame visibly pushes in when the speaker says a zoom word
 - You hear a soft pop as each subtitle line appears, and a whoosh on each zoom
+- The voice plays at about the same loudness as other clips in the feed (around -14 LUFS)
 
 ## Where it fits
 
@@ -78,4 +97,5 @@ talking-head footage, which is most of what gets posted as shorts.
 
 Measured on a 9.0 s, 480x360 portrait H.264 phone clip of Thai speech, on a
 4-core container with no GPU: transcription with large-v3 took 27.2 s (model
-cached), planning 0.2 s, and rendering 12.2 s for a 7.3 s 1080x1440 output.
+cached), planning 0.2 s, and rendering 12.2 s for a 7.3 s 1080x1440 output. Building an SFX kit from a
+395 MB, 636-file pack took 11 s.

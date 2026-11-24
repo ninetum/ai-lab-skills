@@ -27,6 +27,8 @@ calls in between.
 - `scripts/plan.py`: writes `plan.json`, which holds every decision (kept
   segments, subtitle lines, camera moves, SFX cues). You read and edit it.
 - `scripts/render.py`: renders the plan exactly. It makes no choices of its own.
+- `scripts/sfx_kit.py`: builds a sound-effect kit from the user's own SFX pack
+  (a folder or .zip). Run it once; `render.py` picks the kit up automatically.
 
 **Apply the house style without asking.** The user set it up so they never have
 to repeat it. Jump cuts, punch-ins, keyword zooms, karaoke subtitles (Mitr Bold;
@@ -96,13 +98,52 @@ Examples:
 All times in the plan are on the OUTPUT clock, after cuts. `segments` are the
 only source-clock times.
 
+## SFX kit: sounds by role
+
+With a kit at `~/.cache/talking-head-edit/sfx/kit.json`, every cue plays a real
+sound from the user's pack, and variants rotate so that repeats don't sound
+canned. Without a kit, only `pop`, `whoosh` and `ding` work, synthesized in
+code, and any other kind is skipped with a warning. Build or rebuild the kit
+with:
+
+```bash
+python3 "$SKILL_DIR/scripts/sfx_kit.py" <pack.zip or folder> --out ~/.cache/talking-head-edit/sfx
+```
+
+The kit picks files by filename for each role, trims leading silence,
+levels each sound to -16 LUFS, and records where its peak is. A cue's `t` is
+when the sound HITS, and the renderer starts the file early by its peak offset.
+Put the cue on the beat itself, not before it.
+
+`plan.py` places pop, whoosh and ding. The other roles exist for you to place
+by meaning. This is the part that makes a clip feel edited:
+
+| Role | Put it on |
+| --- | --- |
+| `cash` | a price, "ลดราคา", "ขายดี", a sale or money moment |
+| `click` | a button, a choice, "กดลิงก์", "กดตะกร้า" |
+| `camera` | showing a product or photo, a freeze or "snapshot" moment |
+| `punch` | a hard point, a punchline, a jump cut that needs impact |
+| `fail` | a mistake, "ผิด", a before/bad example |
+| `victory` | the result, the reveal, "สำเร็จ" |
+| `drama` | a twist, a suspense line ("แต่...", "รู้ไหมว่า") |
+| `riser` | the build-up just before a reveal. Its peak is the reveal |
+| `glitch` | a tech beat, a transition, "error" |
+| `typing` | text appearing, talking about writing or code |
+
+Keep it sparse: about one meaning-placed effect every 3-5 seconds, `gain`
+0.3-0.5. Use `kit.json` to see which roles the user's pack actually covers.
+
 ## Step 4: render
 
 ```bash
 python3 "$SKILL_DIR/scripts/render.py" <work>/plan.json --out <work>/final.mp4 --workdir <work>/render
 ```
 
-Width defaults to 1080, and height follows the aspect. On first run it downloads
+Width defaults to 1080, and height follows the aspect. The voice is levelled to
+-16 LUFS before mixing and the master to -14 LUFS, the level the short-video
+platforms play at. A quiet phone recording measured -26.7 LUFS raw and came out
+at -14.8 LUFS. On first run it downloads
 Mitr Bold and Pattaya (Google Fonts, OFL) to `~/.cache/talking-head-edit/fonts`.
 If that download fails, it warns and falls back to an installed Thai font.
 
@@ -134,9 +175,18 @@ is a lone fragment. Then send the video to the user and say what was cut
 - **`--min-silence` is a style dial.** Raise it to 0.7 for calm explainers.
   Below 0.3 it starts eating breaths mid-sentence.
 
+## Music
+
+Never mix a trending song into the render. Commercial music gets muted or the
+clip taken down, and business accounts may use only TikTok's Commercial Music
+Library. Deliver voice plus SFX, and tell the user to add the trending sound in
+the app when posting, at about 10-15% volume. The algorithm also favours clips
+that use a trending sound attached in the app.
+
 ## Measured
 
 On a 9.0 s, 480x360 (portrait, rotated) H.264 phone clip of Thai speech, on a
 4-core cloud container with no GPU: `transcribe.py` with large-v3 took 27.2 s
 (model already cached), `plan.py` 0.2 s, and `render.py` 12.2 s for a 7.3 s
-1080x1440 output.
+1080x1440 output. Building the kit from a 395 MB, 636-file pack took 11 s, or
+27.3 s including the download from Google Drive.

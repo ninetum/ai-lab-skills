@@ -18,9 +18,12 @@ point that the agent finishes.
 Two related choices follow from the same goal of keeping the skill a folder you
 copy:
 
-- **Sound effects are synthesized, not sampled.** Three short generators
-  (pop, whoosh, ding) in about 40 lines of stdlib Python replace a sample pack.
-  There is nothing to license, nothing to download, and nothing to go missing.
+- **Sound effects come from the user's own pack, with a synthesized floor.**
+  `sfx_kit.py` sorts any pack into roles and records each sound's peak, so a
+  cue names the moment the sound hits. Without a pack, three stdlib generators
+  (pop, whoosh, ding) keep the skill working with nothing installed. The skill
+  never ships a sample library. Third-party SFX licences vary, so the pack
+  stays the user's.
 - **Camera moves use ffmpeg `zoompan` driven by one nested expression** of the
   input time, rather than per-frame image processing in Python. That keeps the
   scripts stdlib-only. The cost is that zoompan crops at whole-pixel positions,

@@ -7,7 +7,8 @@ argued with and hand-edited before a single frame renders:
   segments  which source ranges survive (dead air between them is cut)
   lines     subtitle lines, each a list of timed words on the OUTPUT clock
   moves     camera moves: zoom level and focus point, with a ramp time
-  sfx       sound-effect cues (pop / whoosh / ding) on the output clock
+  sfx       sound-effect cues on the output clock; `t` is where the sound
+            HITS (render.py aligns each sound's peak to it)
 
 Defaults, all overridable by editing the JSON:
 
@@ -270,18 +271,18 @@ def main() -> int:
     for t, kind, i in events:
         if zoomed and auto_out is not None and t >= auto_out:
             move(auto_out, base, 0.5, "auto zoom-out")
-            sfx.append({"t": round(auto_out - 0.1, 3), "kind": "whoosh", "gain": 0.35})
+            sfx.append({"t": round(auto_out + 0.25, 3), "kind": "whoosh", "gain": 0.35})
             zoomed = False
         if kind == "punch" and not zoomed:
             base = PUNCH if base == 1.0 else 1.0
             move(t, base, 0, "punch-in" if t > 0 else "start")
         elif kind == "zin" and not zoomed:
             move(t, ZOOM_IN_Z, 0.35, f"said '{ow[i]['w']}'")
-            sfx.append({"t": round(t - 0.12, 3), "kind": "whoosh", "gain": 0.6})
+            sfx.append({"t": round(t + 0.17, 3), "kind": "whoosh", "gain": 0.6})
             zoomed, auto_out = True, t + AUTO_OUT
         elif kind == "zout" and zoomed:
             move(t, base, 0.5, f"said '{ow[i]['w']}'")
-            sfx.append({"t": round(t - 0.1, 3), "kind": "whoosh", "gain": 0.4})
+            sfx.append({"t": round(t + 0.25, 3), "kind": "whoosh", "gain": 0.4})
             zoomed = False
         elif kind == "emph":
             z = moves[-1]["z"] if zoomed else base

@@ -87,13 +87,16 @@ with word timings, rebuilding Thai words from Whisper's character-level output
 with PyThaiNLP. It writes every cut, camera move and sound cue into an editable
 `plan.json`, then renders it with ffmpeg. The speaker directs the camera by
 voice: saying "ซูมอิน" or "zoom in" on camera pushes in on that word. Sound
-effects are synthesized in code, so there is no sample pack to license.
+effects come from your own SFX pack. `sfx_kit.py` sorts it into roles like
+whoosh, pop, ka-ching and shutter, and aligns each sound's peak to its beat.
+Without a pack, pop, whoosh and ding are synthesized in code.
 
 | Step | Measured (9.0 s Thai phone clip, 4-core CPU, no GPU) |
 | --- | --- |
 | Transcribe (faster-whisper large-v3, model cached) | 27.2 s |
 | Plan | 0.2 s |
 | Render to 1080x1440 (7.3 s after silence cuts) | 12.2 s |
+| Build an SFX kit from a 395 MB, 636-file pack (once) | 11 s |
 
 → **[`talking-head-edit`](./skills/talking-head-edit/SKILL.md)** · [docs](./docs/talking-head-edit.md)
 
@@ -156,7 +159,7 @@ ai-lab-skills/
 │   │   └── scripts/         # frames.py, transcript.py
 │   ├── talking-head-edit/
 │   │   ├── SKILL.md
-│   │   └── scripts/         # transcribe.py, plan.py, render.py
+│   │   └── scripts/         # transcribe.py, plan.py, render.py, sfx_kit.py
 │   └── image-gen-router/
 │       ├── SKILL.md
 │       └── scripts/         # gen_gpt.py, gen_gemini.py

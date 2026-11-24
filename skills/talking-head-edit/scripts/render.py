@@ -8,8 +8,11 @@ choices of its own. Pipeline:
              fades at every join so cuts don't click
   2. picture crop to the aspect, upscale 2x, then zoompan per frame from the
              plan's moves (smoothstep ramps), then burn the ASS subtitles
-  3. sound   synthesize pop / whoosh / ding as WAVs (no sample library, no
-             licence question), place them with adelay, mix under the voice
+  3. sound   each cue plays from the SFX kit built by sfx_kit.py (your own
+             pack), aligned so the sound's PEAK lands on the cue time; without
+             a kit, pop / whoosh / ding are synthesized in code. Voice is
+             levelled to -16 LUFS before the mix and the master to -14 LUFS,
+             the level TikTok / Reels / Shorts play at
 
 Subtitles light up word by word: the spoken word turns yellow and pops from
 135% to 100% in 140 ms; emphasis words use the display font. Fonts are Google
@@ -18,6 +21,7 @@ it falls back to an installed Thai font.
 
 Usage:
   python3 render.py plan.json --out final.mp4 [--width 1080] [--workdir DIR]
+                    [--sfx-kit ~/.cache/talking-head-edit/sfx/kit.json]
 
 Prints `VIDEO: <abs-path>` on the last line. Exit 1 on bad input, 4 if ffmpeg
 fails.
@@ -101,6 +105,7 @@ def synth_ding() -> list[float]:
 
 
 SYNTHS = {"pop": synth_pop, "whoosh": synth_whoosh, "ding": synth_ding}
+SYNTH_PEAK = {"pop": 0.0, "whoosh": 0.22, "ding": 0.0}  # seconds to the loudest point
 
 
 # ---------------------------------------------------------------- fonts ----
@@ -246,6 +251,8 @@ def main() -> int:
     ap.add_argument("--out", required=True)
     ap.add_argument("--width", type=int, default=1080)
     ap.add_argument("--workdir", default=None)
+    ap.add_argument("--sfx-kit", default=str(CACHE.parent / "sfx" / "kit.json"),
+                    help="kit.json from sfx_kit.py (default: the cache; synth if absent)")
     args = ap.parse_args()
 
     plan = json.loads(Path(args.plan).read_text(encoding="utf-8"))
@@ -299,13 +306,34 @@ def main() -> int:
     # 3. sound effects
     cues = plan.get("sfx", [])
     inputs = ["-i", str(cut)]
-    kinds = sorted({c["kind"] for c in cues if c["kind"] in SYNTHS})
+    kit_path = Path(args.sfx_kit).expanduser()
+    kit = json.loads(kit_path.read_text(encoding="utf-8")) if kit_path.is_file() else {}
+    # each cue -> (file, peak); a role's variants rotate so repeats don't sound canned
+    by_file: dict[str, list[tuple[dict, float]]] = {}
+    seen: dict[str, int] = {}
+    synth_files = {}
+    for c in cues:
+        k = c["kind"]
+        if k in kit:
+            v = kit[k][seen.get(k, 0) % len(kit[k])]
+            seen[k] = seen.get(k, 0) + 1
+            f, peak = str(kit_path.parent / v["file"]), v["peak"]
+        elif k in SYNTHS:
+            if k not in synth_files:
+                synth_files[k] = work / f"{k}.wav"
+                write_wav(synth_files[k], SYNTHS[k]())
+            f, peak = str(synth_files[k]), SYNTH_PEAK[k]
+        else:
+            print(f"no sound for sfx kind '{k}' (build a kit with sfx_kit.py); skipped",
+                  file=sys.stderr)
+            continue
+        by_file.setdefault(f, []).append((c, peak))
     idx = {}
-    for k in kinds:
-        f = work / f"{k}.wav"
-        write_wav(f, SYNTHS[k]())
-        idx[k] = len(inputs) // 2
-        inputs += ["-i", str(f)]
+    for f in by_file:
+        idx[f] = len(inputs) // 2
+        inputs += ["-i", f]
+    print(f"sfx: {'kit ' + str(kit_path) if kit else 'synthesized (no kit)'}",
+          file=sys.stderr)
 
     z = curve(moves, "z")
     x = f"max(0,min(iw-iw/zoom,({curve(moves, 'fx')})*iw-iw/zoom/2))"
@@ -315,26 +343,30 @@ def main() -> int:
     graph = [f"[0:v]crop={cw}:{ch}:{int(cx)}:{int(cy)},scale={2 * W}:{2 * H}:flags=lanczos,"
              f"zoompan=z='{z}':x='{x}':y='{y}':d=1:s={W}x{H}:fps={FPS},"
              f"ass='{esc}':fontsdir='{fdir}',format=yuv420p[v]"]
-    mix = ["[0:a]"]
-    for k in kinds:
-        mine = [c for c in cues if c["kind"] == k]
+    # voice to -16 LUFS first so kit SFX (also -16 LUFS) sit `gain` below it
+    graph.append("[0:a]loudnorm=I=-16:TP=-1.5:LRA=11[voice]")
+    mix = ["[voice]"]
+    for fi, (f, mine) in enumerate(by_file.items()):
+        k = f"s{fi}_"
         labels = "".join(f"[{k}{n}]" for n in range(len(mine)))
-        graph.append(f"[{idx[k]}:a]asplit={len(mine)}{labels}" if len(mine) > 1
-                     else f"[{idx[k]}:a]anull{labels}")
-        for n, c in enumerate(mine):
-            ms = max(0, int(c["t"] * 1000))
-            graph.append(f"[{k}{n}]adelay={ms}:all=1,volume={c['gain']}[{k}{n}o]")
+        graph.append(f"[{idx[f]}:a]asplit={len(mine)}{labels}" if len(mine) > 1
+                     else f"[{idx[f]}:a]anull{labels}")
+        for n, (c, peak) in enumerate(mine):
+            start = c["t"] - peak          # cue time is where the sound HITS
+            trim = f"atrim=start={-start:.3f},asetpts=PTS-STARTPTS," if start < 0 else ""
+            ms = max(0, int(start * 1000))
+            graph.append(f"[{k}{n}]{trim}adelay={ms}:all=1,volume={c['gain']}[{k}{n}o]")
             mix.append(f"[{k}{n}o]")
     if len(mix) > 1:
         graph.append(f"{''.join(mix)}amix=inputs={len(mix)}:normalize=0:"
-                     "duration=first,alimiter=limit=0.95[a]")
+                     "duration=first,loudnorm=I=-14:TP=-1:LRA=11[a]")
     else:
-        graph.append("[0:a]anull[a]")
+        graph.append("[voice]loudnorm=I=-14:TP=-1:LRA=11[a]")
 
     out = Path(args.out).resolve()
     run(["ffmpeg", "-v", "error", "-y", *inputs, "-filter_complex", ";".join(graph),
          "-map", "[v]", "-map", "[a]", "-c:v", "libx264", "-preset", "medium",
-         "-crf", "18", "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart",
+         "-crf", "18", "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-movflags", "+faststart",
          str(out)])
     print(f"{W}x{H}, {plan['duration']:.2f}s, {len(plan['lines'])} lines, "
           f"{len(plan['moves'])} moves, {len(cues)} sfx; work files in {work}",
